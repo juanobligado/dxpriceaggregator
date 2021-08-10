@@ -18,15 +18,31 @@ use marine_rs_sdk::{marine, module_manifest, WasmLoggerBuilder};
 
 module_manifest!();
 
+
 pub fn main() {
     WasmLoggerBuilder::new().build().unwrap();
 }
 
 #[marine]
-pub fn greeting(name: String) -> String {
-    format!("Hi, {}", name)
+pub fn process_data( data_points : Vec<f64>) -> f64 {    
+    //calculate mean
+    mean(&data_points)
+    // filter out 
+    // push to ceramic
 }
 
+pub fn mean(list: &[f64]) -> f64{
+    let total: f64 = Iterator::sum(list.iter());
+    f64::from(total) / (list.len() as f64)
+}
+
+// standard deviation
+//pub fn std_dev(list: &[f64]) -> f64{
+//}
+
+// Measure how far the data point is
+//pub fn zeta_score(list: &[f64]) -> f64{
+//}
 // To run tests:
 // cargo test --release
 // Since the unit tests are using the wasm module via the marine_test crate import
@@ -45,9 +61,25 @@ mod tests {
     use marine_rs_sdk_test::marine_test;
 
     #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
-    fn test_greeting() {
-        let name = "Test Service";
-        let res = greeting.greeting(name.to_string());
-        assert_eq!(res, format!("Hi, {}", name));
+    fn test_process_data() {
+        let points:Vec<f64> = vec![1.5,1.0,2.0];
+        let meanResult = aggregatorservice.process_data(points);
+        let expected:f64 = 1.5;
+        assert_eq!(expected, meanResult);
     }
+
+    #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
+    fn test_process_empty_data() {
+        let points =  Vec::<f64>::new();
+        let meanResult = aggregatorservice.process_data(points);
+        assert!( meanResult.is_nan());
+    }
+
+
+    // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
+    // fn test_greeting() {
+    //     let points = [1.1,1.2,5.0]];
+    //     let res = greeting.greeting(name.to_string());
+    //     assert_eq!(res, format!("Hi, {}", name));
+    // }
 }
