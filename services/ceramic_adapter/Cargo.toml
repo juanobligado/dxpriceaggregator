@@ -1,0 +1,14 @@
+[package]
+name = "ceramic_adapter"
+version = "0.1.0"
+authors = ["Juan obligado"]
+edition = "2018"
+publish = false
+
+[[bin]]
+path = "src/main.rs"
+name = "ceramic_adapter"
+
+[dependencies]
+marine-rs-sdk = { version = "=0.6.10", features = ["logger"]}
+log = "0.4.8"

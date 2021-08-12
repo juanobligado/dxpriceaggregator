@@ -15,6 +15,9 @@
  */
 
 use marine_rs_sdk::{marine, module_manifest, WasmLoggerBuilder};
+use std::collections::HashMap;
+
+mod numeric_utils
 
 module_manifest!();
 
@@ -23,17 +26,31 @@ pub fn main() {
     WasmLoggerBuilder::new().build().unwrap();
 }
 
+
+#[marine]
+#[link(wasm_import_module = "ceramic_adapter")]
+extern "C" {
+    pub fn ceramic_request(url: Vec<String>) -> MountedBinaryResult;
+}
+
 #[marine]
 pub fn process_data( data_points : Vec<f64>) -> f64 {    
     //calculate mean
+    call_api();
     mean(&data_points)
     // filter out 
     // push to ceramic
 }
 
-pub fn mean(list: &[f64]) -> f64{
-    let total: f64 = Iterator::sum(list.iter());
-    f64::from(total) / (list.len() as f64)
+
+
+
+
+pub fn call_api() -> Result<(), Box<dyn std::error::Error>> {
+    let mut resp = reqwest::blocking::get("https://httpbin.org/ip")?
+        .json::<HashMap<String, String>>()?;
+    println!("{:#?}", resp);
+    Ok(())
 }
 
 // standard deviation
@@ -59,6 +76,7 @@ pub fn mean(list: &[f64]) -> f64{
 #[cfg(test)]
 mod tests {
     use marine_rs_sdk_test::marine_test;
+
 
     #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
     fn test_process_data() {
