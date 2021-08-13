@@ -1,7 +1,7 @@
 {
-  "name": "curl_adapter",
+  "name": "ceramic_adapter",
   "mountedBinaries":
     {
-      "curl": "/usr/bin/curl"
+      "ceramic": "/root/.nvm/versions/node/v14.17.0/bin/ceramic"
     }
 }
