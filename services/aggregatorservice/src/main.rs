@@ -1,23 +1,32 @@
-/*
- * Copyright 2021 Fluence Labs Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+#![allow(
+    non_snake_case,
+    unused_variables,
+    unused_imports,
+    unused_parens,
+    unused_mut
+)]
 
-use marine_rs_sdk::{marine, module_manifest, WasmLoggerBuilder};
+
+use marine_rs_sdk::{marine, module_manifest, WasmLoggerBuilder,MountedBinaryStringResult};
 use std::collections::HashMap;
 
-mod numeric_utils
+use serde::{Serialize,Deserialize};
+use serde_json::Result;
+
+#[marine]
+#[derive(Serialize,Deserialize,Debug)]
+pub struct BarPrice {
+    pub ticker: String,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub close: f64,
+    pub start_time: u64,
+    pub duration: u64,
+}
+
+
+
 
 module_manifest!();
 
@@ -30,28 +39,59 @@ pub fn main() {
 #[marine]
 #[link(wasm_import_module = "ceramic_adapter")]
 extern "C" {
-    pub fn ceramic_request(url: Vec<String>) -> MountedBinaryResult;
+    pub fn ceramic_request(url: Vec<String>) -> MountedBinaryStringResult;
+}
+
+
+#[marine]
+pub fn read_last_price(streamId: String)-> BarPrice{
+    let ceramic_args = vec![String::from("show"), streamId];
+    unsafe{
+        let result = ceramic_request(ceramic_args);
+        println!("Data {:?}",result.stdout);
+        let bar :BarPrice  = serde_json::from_str(&result.stdout).unwrap();
+        bar
+    }    
 }
 
 #[marine]
-pub fn process_data( data_points : Vec<f64>) -> f64 {    
-    //calculate mean
-    call_api();
-    mean(&data_points)
-    // filter out 
-    // push to ceramic
+pub fn update_price(streamId:String,barPrice: BarPrice)-> String{
+    let ceramic_args = vec![String::from("update"), streamId,String::from("--content"),serde_json::to_string(&barPrice).unwrap()];
+    unsafe{
+        let result = ceramic_request(ceramic_args);
+        println!("Data {:?}",result.stdout);
+        println!("Err {:?}",result.stderr);
+        result.stdout
+    }    
 }
 
 
 
+// #[marine]
+// pub fn process_data( data_points : Vec<f64>, streamId : String )  {    
+//     //calculate mean
+//     //call_api();
+//     //mean(&data_points)
+//     // filter out 
+//     // push to ceramic
+//     //Read existing stream
+
+//     //update with new price
+
+//     // push data point 
+//     // return updated?
+// }
 
 
-pub fn call_api() -> Result<(), Box<dyn std::error::Error>> {
-    let mut resp = reqwest::blocking::get("https://httpbin.org/ip")?
-        .json::<HashMap<String, String>>()?;
-    println!("{:#?}", resp);
-    Ok(())
-}
+
+
+
+// pub fn call_api() -> Result<(), Box<dyn std::error::Error>> {
+//     let mut resp = reqwest::blocking::get("https://httpbin.org/ip")?
+//         .json::<HashMap<String, String>>()?;
+//     println!("{:#?}", resp);
+//     Ok(())
+// }
 
 // standard deviation
 //pub fn std_dev(list: &[f64]) -> f64{
@@ -77,21 +117,36 @@ pub fn call_api() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use marine_rs_sdk_test::marine_test;
 
+    #[marine_test(config_path = "../../Config.toml", modules_dir = "../../artifacts")]
+    fn test_get_price() {
+        let streamId:String = String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k");
+        let mut price = aggregatorservice.read_last_price(streamId);
+        println!("{:?} Last Price {:?}",price.ticker,price.close);
 
-    #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
-    fn test_process_data() {
-        let points:Vec<f64> = vec![1.5,1.0,2.0];
-        let meanResult = aggregatorservice.process_data(points);
-        let expected:f64 = 1.5;
-        assert_eq!(expected, meanResult);
+        println!("Setting Last to 3300");
+        price.close = 3300.0;
+        price.high = 3300.0;
+        let result = aggregatorservice.update_price(String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k"),price);
+        println!("{:?} ",result);
+
     }
 
-    #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
-    fn test_process_empty_data() {
-        let points =  Vec::<f64>::new();
-        let meanResult = aggregatorservice.process_data(points);
-        assert!( meanResult.is_nan());
-    }
+    
+
+    // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
+    // fn test_process_data() {
+    //     let points:Vec<f64> = vec![1.5,1.0,2.0];
+    //     let meanResult = aggregatorservice.process_data(points);
+    //     let expected:f64 = 1.5;
+    //     assert_eq!(expected, meanResult);
+    // }
+
+    // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
+    // fn test_process_empty_data() {
+    //     let points =  Vec::<f64>::new();
+    //     let meanResult = aggregatorservice.process_data(points);
+    //     assert!( meanResult.is_nan());
+    // }
 
 
     // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]

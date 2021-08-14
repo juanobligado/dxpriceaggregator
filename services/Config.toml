@@ -6,3 +6,7 @@ modules_dir = "artifacts/"
 
     [module.mounted_binaries]
     ceramic = "/root/.nvm/versions/node/v14.17.0/bin/ceramic"
+
+[[module]]
+    name = "aggregatorservice"
+    # logger_enabled = true

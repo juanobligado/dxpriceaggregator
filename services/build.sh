@@ -5,10 +5,14 @@ cd ceramic_adapter
 cargo update --aggressive
 marine build --release
 
+cd ../aggregatorservice
+cargo update --aggressive
+marine build --release
+
 cd ..
 
 mkdir -p artifacts
 rm -f artifacts/*.wasm
 
 cp ceramic_adapter/target/wasm32-wasi/release/ceramic_adapter.wasm artifacts/
-#cp facade/target/wasm32-wasi/release/facade.wasm artifacts/
+cp aggregatorservice/target/wasm32-wasi/release/aggregatorservice.wasm artifacts/

@@ -55,11 +55,12 @@ mod tests {
     fn test_get_stream() {
         
         let streamId:String = String::from("kjzl6cwe1jw146pyqulykqe0c94htgekoeujdxlymix54dbb5biwjp9qqofwecu");
-        let strBody:String = String::from(r#"{"Ticker":"ETH","Last": 14.23,"Timestamp":123434343}"#);
-        println!("strBody {:?}",strBody);
-        let ceramic_args = f!(r#"update {streamId} --content '{strBody}'"#);
+        //let ceramic_args:String= format!("update {:?} --content '{{\"ticker\":\"ETH\", \"last\": 15.0}}'",streamId);
+        
+        let ceramic_args = vec![String::from("update"), streamId, String::from("--content"), String::from(r#"{"ticker":"ETH", "last": 15.0}"#)];
+//        let ceramic_args = f!(r#"update {streamId} "#);
         println!("Running Ceramic Request with {:?}",ceramic_args);
-        let result = ceramic_adapter.ceramic_request(vec!(ceramic_args));
+        let result = ceramic_adapter.ceramic_request(ceramic_args);
         println!("Ret Code {:?}",result.ret_code);
         println!("Errors  {:?}",result.error);
         println!("STDERR  {:?}",result.stderr);
