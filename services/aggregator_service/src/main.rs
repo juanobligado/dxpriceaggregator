@@ -20,9 +20,8 @@ pub struct BarPrice {
     pub high: f64,
     pub low: f64,
     pub close: f64,
-//    pub start_time: u64,
-//    pub duration: u64,
-
+    pub duration: f64,
+    pub start_time: f64
 }
 
 #[marine]
@@ -32,8 +31,6 @@ pub struct Result {
     pub high: f64,
     pub low: f64,
     pub close: f64,
-//    pub start_time: u64,
-//    pub current_time: u64,
     pub success: bool,
     pub error_msg: String,
 }
@@ -135,7 +132,7 @@ pub fn fake_read_last() -> Result{
 }
 
 #[marine]
-pub fn process_data( newPrice:f64, streamId : String  ) -> Result  {    
+pub fn process_data(  streamId : String,newPrice:f64  ) -> Result  {    
     let existingPrice = read_last_price(streamId.clone());  
     if(existingPrice.success){
 
@@ -145,8 +142,8 @@ pub fn process_data( newPrice:f64, streamId : String  ) -> Result  {
             high : existingPrice.high,
             low : existingPrice.low,
             close : newPrice,
-//            duration : 1000,
-//            start_time : existingPrice.start_time
+           duration : 1000.0,
+           start_time : 1000.0
         };
         if(newPrice > existingPrice.high){
             newBar.high = newPrice;
@@ -172,77 +169,20 @@ pub fn process_data( newPrice:f64, streamId : String  ) -> Result  {
      
 }
 
-    //calculate mean
-    //call_api();
-    //mean(&data_points)
-    // filter out 
-    // push to ceramic
-    //Read existing stream
 
-    //update with new price
-
-    // push data point 
-    // return updated?
-
-
-
-
-// Measure how far the data point is
-//pub fn zeta_score(list: &[f64]) -> f64{
-//}
-// To run tests:
-// cargo test --release
-// Since the unit tests are using the wasm module via the marine_test crate import
-// the modules and Config.toml need to exist. That is, run ./build.sh before you run cargo test.
-// Moreover, the test function(s) need to be prefixed by the wasm module namespace, which
-// generally is derived from the project name.
-// if you name the project "greeting", e.g., cargo generate -g https:// ... --name greeting
-// the unit test can be executed as is. If not, the project needs to replace the "greeting"
-// reference in place
-// if
-// cargo generate -g https:// ... --name project-name
-// then
-// let res = project_name.greeting(name.to_string());
 #[cfg(test)]
 mod tests {
     use marine_rs_sdk_test::marine_test;
 
     #[marine_test(config_path = "../../Config.toml", modules_dir = "../../artifacts")]
     fn test_get_price() {
-        let streamId:String = String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k");
-        let mut price = aggregator_service.read_last_price(streamId);
-        println!("{:?} Last Price {:?}",price.ticker,price.close);
-
-        println!("Setting Last to 3300");
-        price.close = 3300.0;
-        price.high = 3300.0;
-        let result = aggregator_service.update_price(String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k"),price);
-        println!("{:?} ",result);
+        let streamId:String = String::from("kjzl6cwe1jw14b4p64saz1980b0gl3l1c98ag1pslez0shjrhv1mr44257hv9m0");
+        let newPrice : f64= 4323.32;
+        let result = aggregator_service.process_data(streamId,newPrice);
+        println!("Open {:?} High {:?} Low {:?} Close {:?} ",result.open,result.high,result.low,result.close);
 
     }
 
     
 
-    // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
-    // fn test_process_data() {
-    //     let points:Vec<f64> = vec![1.5,1.0,2.0];
-    //     let meanResult = aggregatorservice.process_data(points);
-    //     let expected:f64 = 1.5;
-    //     assert_eq!(expected, meanResult);
-    // }
-
-    // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
-    // fn test_process_empty_data() {
-    //     let points =  Vec::<f64>::new();
-    //     let meanResult = aggregatorservice.process_data(points);
-    //     assert!( meanResult.is_nan());
-    // }
-
-
-    // #[marine_test(config_path = "../Config.toml", modules_dir = "../artifacts")]
-    // fn test_greeting() {
-    //     let points = [1.1,1.2,5.0]];
-    //     let res = greeting.greeting(name.to_string());
-    //     assert_eq!(res, format!("Hi, {}", name));
-    // }
 }
