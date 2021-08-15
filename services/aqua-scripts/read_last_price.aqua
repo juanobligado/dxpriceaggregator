@@ -14,7 +14,8 @@ service AggregatorService("AggregatorService"):
   read_last_price(streamId: string)-> Result
   ping()-> string
 
-func read_last_price(aggregator_service_id: string,streamId :string) -> Result:
+func read_last_price(node: string,aggregator_service_id: string,streamId :string) -> Result:
+  on node:  
     AggregatorService aggregator_service_id
     last_price <- AggregatorService.read_last_price(streamId)
   <- last_price

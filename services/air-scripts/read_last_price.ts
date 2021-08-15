@@ -12,7 +12,7 @@ import { RequestFlow } from '@fluencelabs/fluence/dist/internal/RequestFlow';
 
 
 
-export async function read_last_price(client: FluenceClient, aggregator_service_id: string, streamId: string, config?: {ttl?: number}): Promise<{close:number;error_msg:string;high:number;low:number;open:number;success:boolean;ticker:string}> {
+export async function read_last_price(client: FluenceClient, node: string, aggregator_service_id: string, streamId: string, config?: {ttl?: number}): Promise<{close:number;error_msg:string;high:number;low:number;open:number;success:boolean;ticker:string}> {
     let request: RequestFlow;
     const promise = new Promise<{close:number;error_msg:string;high:number;low:number;open:number;success:boolean;ticker:string}>((resolve, reject) => {
         const r = new RequestFlowBuilder()
@@ -24,19 +24,37 @@ export async function read_last_price(client: FluenceClient, aggregator_service_
   (seq
    (seq
     (seq
-     (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-     (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
+     (seq
+      (seq
+       (seq
+        (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+        (call %init_peer_id% ("getDataSrv" "node") [] node)
+       )
+       (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
+      )
+      (call %init_peer_id% ("getDataSrv" "streamId") [] streamId)
+     )
+     (call -relay- ("op" "noop") [])
     )
-    (call %init_peer_id% ("getDataSrv" "streamId") [] streamId)
+    (xor
+     (seq
+      (call -relay- ("op" "noop") [])
+      (call node (aggregator_service_id "read_last_price") [streamId] last_price)
+     )
+     (seq
+      (call -relay- ("op" "noop") [])
+      (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+     )
+    )
    )
-   (call %init_peer_id% (aggregator_service_id "read_last_price") [streamId] last_price)
+   (call -relay- ("op" "noop") [])
   )
   (xor
    (call %init_peer_id% ("callbackSrv" "response") [last_price])
-   (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+   (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
   )
  )
- (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+ (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
 )
 
             `,
@@ -45,7 +63,8 @@ export async function read_last_price(client: FluenceClient, aggregator_service_
                 h.on('getDataSrv', '-relay-', () => {
                     return client.relayPeerId!;
                 });
-                h.on('getDataSrv', 'aggregator_service_id', () => {return aggregator_service_id;});
+                h.on('getDataSrv', 'node', () => {return node;});
+h.on('getDataSrv', 'aggregator_service_id', () => {return aggregator_service_id;});
 h.on('getDataSrv', 'streamId', () => {return streamId;});
                 h.onEvent('callbackSrv', 'response', (args) => {
     const [res] = args;

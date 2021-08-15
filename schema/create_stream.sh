@@ -28,3 +28,5 @@ ceramic create tile --content '{"ticker":"ETH","duration":10000,"start_time":1,"
 
 
 StreamId: kjzl6cwe1jw14b4p64saz1980b0gl3l1c98ag1pslez0shjrhv1mr44257hv9m0
+
+ceramic show kjzl6cwe1jw14b4p64saz1980b0gl3l1c98ag1pslez0shjrhv1mr44257hv9m0

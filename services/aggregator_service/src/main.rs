@@ -20,8 +20,9 @@ pub struct BarPrice {
     pub high: f64,
     pub low: f64,
     pub close: f64,
-    pub start_time: u64,
-    pub duration: u64,
+//    pub start_time: u64,
+//    pub duration: u64,
+
 }
 
 #[marine]
@@ -31,6 +32,8 @@ pub struct Result {
     pub high: f64,
     pub low: f64,
     pub close: f64,
+//    pub start_time: u64,
+//    pub current_time: u64,
     pub success: bool,
     pub error_msg: String,
 }
@@ -89,48 +92,100 @@ pub fn read_last_price(streamId: String)-> Result{
     }
 }
 
-// #[marine]
-// pub fn update_price(streamId:String,barPrice: BarPrice)-> String{
-//     let ceramic_args = vec![String::from("update"), streamId,String::from("--content"),serde_json::to_string(&barPrice).unwrap()];
-//     unsafe{
-//         let result = ceramic_request(ceramic_args);
-//         println!("Data {:?}",result.stdout);
-//         println!("Err {:?}",result.stderr);
-//         result.stdout
-//     }    
-// }
+
+pub fn update_price(streamId:String,barPrice: BarPrice)-> Result{
+    let ceramic_args = vec![String::from("update"), streamId,String::from("--content"),serde_json::to_string(&barPrice).unwrap()];
+    let response = unsafe{ ceramic_request(ceramic_args) };
+    let result = String::from_utf8(response.stdout);
+    match result {
+        Ok(res) => {
+            let bar :BarPrice  = serde_json::from_str(&&res.clone()).unwrap();
+            Result {
+                ticker: bar.ticker,
+                open: bar.open,
+                high: bar.high,
+                low: bar.low,
+                close: bar.close,
+                success: true,
+                error_msg: "".to_string(),
+            }
+        }
+        Err(_) => Result{
+                ticker: "".to_string(),
+                open: -1.0,
+                high: -1.0,
+                low: -1.0,
+                close: -1.0,
+                success: false,
+                error_msg: String::from_utf8(response.stderr).unwrap(),            
+        }
+    }    
+}
+
+pub fn fake_read_last() -> Result{
+    Result{
+        ticker :"ETH".to_string(),
+        open : 10.0,
+        high : 11.3,
+        low :9.2,
+        close :12.3,
+        error_msg : "".to_string(),
+        success : true
+    }
+}
+
+#[marine]
+pub fn process_data( newPrice:f64, streamId : String  ) -> Result  {    
+    let existingPrice = read_last_price(streamId.clone());  
+    if(existingPrice.success){
+
+        let mut newBar  =  BarPrice{
+            ticker : existingPrice.ticker,
+            open : existingPrice.open,
+            high : existingPrice.high,
+            low : existingPrice.low,
+            close : newPrice,
+//            duration : 1000,
+//            start_time : existingPrice.start_time
+        };
+        if(newPrice > existingPrice.high){
+            newBar.high = newPrice;
+        };
+        if(newPrice < existingPrice.high){
+            newBar.low = newPrice;
+        };
+        let updated_price_result = update_price(streamId.clone(),newBar);
+        updated_price_result
+    }
+    else
+    {
+        Result{
+            close : 0.0,
+            open : 0.0,
+            high : 0.0,
+            low : 0.0,
+            ticker : "".to_string(),
+            success: false,
+            error_msg : String::from("cannot find last price")
+        }
+    }
+     
+}
+
+    //calculate mean
+    //call_api();
+    //mean(&data_points)
+    // filter out 
+    // push to ceramic
+    //Read existing stream
+
+    //update with new price
+
+    // push data point 
+    // return updated?
 
 
 
-// #[marine]
-// pub fn process_data( data_points : Vec<f64>, streamId : String )  {    
-//     //calculate mean
-//     //call_api();
-//     //mean(&data_points)
-//     // filter out 
-//     // push to ceramic
-//     //Read existing stream
-
-//     //update with new price
-
-//     // push data point 
-//     // return updated?
-// }
-
-
-
-
-
-// pub fn call_api() -> Result<(), Box<dyn std::error::Error>> {
-//     let mut resp = reqwest::blocking::get("https://httpbin.org/ip")?
-//         .json::<HashMap<String, String>>()?;
-//     println!("{:#?}", resp);
-//     Ok(())
-// }
-
-// standard deviation
-//pub fn std_dev(list: &[f64]) -> f64{
-//}
 
 // Measure how far the data point is
 //pub fn zeta_score(list: &[f64]) -> f64{
