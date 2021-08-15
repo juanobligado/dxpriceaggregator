@@ -1,0 +1,1 @@
+fldist  --node-id 12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e new_service --ms artifacts/ceramic_adapter.wasm:configs/ceramic_adapter_cfg.json artifacts/aggregator_service.wasm:configs/aggregator_service_cfg.json --name aggregator-service-0

@@ -7,11 +7,10 @@
 )]
 
 
-use marine_rs_sdk::{marine, module_manifest, WasmLoggerBuilder,MountedBinaryStringResult};
+use marine_rs_sdk::{marine, module_manifest, WasmLoggerBuilder,MountedBinaryResult};
 use std::collections::HashMap;
 
 use serde::{Serialize,Deserialize};
-use serde_json::Result;
 
 #[marine]
 #[derive(Serialize,Deserialize,Debug)]
@@ -25,6 +24,16 @@ pub struct BarPrice {
     pub duration: u64,
 }
 
+#[marine]
+pub struct Result {
+    pub ticker: String,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub close: f64,
+    pub success: bool,
+    pub error_msg: String,
+}
 
 
 
@@ -39,31 +48,57 @@ pub fn main() {
 #[marine]
 #[link(wasm_import_module = "ceramic_adapter")]
 extern "C" {
-    pub fn ceramic_request(url: Vec<String>) -> MountedBinaryStringResult;
+    pub fn ceramic_request(url: Vec<String>) -> MountedBinaryResult;
 }
 
+#[marine]
+pub fn ping() -> String{
+    let result = String::from("pong");
+    result
+}
 
 #[marine]
-pub fn read_last_price(streamId: String)-> BarPrice{
+pub fn read_last_price(streamId: String)-> Result{
+    
     let ceramic_args = vec![String::from("show"), streamId];
-    unsafe{
-        let result = ceramic_request(ceramic_args);
-        println!("Data {:?}",result.stdout);
-        let bar :BarPrice  = serde_json::from_str(&result.stdout).unwrap();
-        bar
-    }    
+    
+    let response = unsafe{ ceramic_request(ceramic_args) };
+    let result = String::from_utf8(response.stdout);
+    match result {
+        Ok(res) => {
+            let bar :BarPrice  = serde_json::from_str(&&res.clone()).unwrap();
+            Result {
+                ticker: bar.ticker,
+                open: bar.open,
+                high: bar.high,
+                low: bar.low,
+                close: bar.close,
+                success: true,
+                error_msg: "".to_string(),
+            }
+        }
+        Err(_) => Result{
+                ticker: "".to_string(),
+                open: -1.0,
+                high: -1.0,
+                low: -1.0,
+                close: -1.0,
+                success: false,
+                error_msg: String::from_utf8(response.stderr).unwrap(),            
+        }
+    }
 }
 
-#[marine]
-pub fn update_price(streamId:String,barPrice: BarPrice)-> String{
-    let ceramic_args = vec![String::from("update"), streamId,String::from("--content"),serde_json::to_string(&barPrice).unwrap()];
-    unsafe{
-        let result = ceramic_request(ceramic_args);
-        println!("Data {:?}",result.stdout);
-        println!("Err {:?}",result.stderr);
-        result.stdout
-    }    
-}
+// #[marine]
+// pub fn update_price(streamId:String,barPrice: BarPrice)-> String{
+//     let ceramic_args = vec![String::from("update"), streamId,String::from("--content"),serde_json::to_string(&barPrice).unwrap()];
+//     unsafe{
+//         let result = ceramic_request(ceramic_args);
+//         println!("Data {:?}",result.stdout);
+//         println!("Err {:?}",result.stderr);
+//         result.stdout
+//     }    
+// }
 
 
 
@@ -120,13 +155,13 @@ mod tests {
     #[marine_test(config_path = "../../Config.toml", modules_dir = "../../artifacts")]
     fn test_get_price() {
         let streamId:String = String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k");
-        let mut price = aggregatorservice.read_last_price(streamId);
+        let mut price = aggregator_service.read_last_price(streamId);
         println!("{:?} Last Price {:?}",price.ticker,price.close);
 
         println!("Setting Last to 3300");
         price.close = 3300.0;
         price.high = 3300.0;
-        let result = aggregatorservice.update_price(String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k"),price);
+        let result = aggregator_service.update_price(String::from("kjzl6cwe1jw147y9am1r6vaxblyxu9qpw5phndnfsx3srahobg0zwv54i1y4z4k"),price);
         println!("{:?} ",result);
 
     }

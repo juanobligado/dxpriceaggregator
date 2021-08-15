@@ -2,12 +2,10 @@
 
 #![allow(improper_ctypes)]
 
-#[macro_use]
-extern crate fstrings;
 
 use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
-use marine_rs_sdk::MountedBinaryStringResult;
+use marine_rs_sdk::MountedBinaryResult;
 use marine_rs_sdk::WasmLoggerBuilder;
 
 module_manifest!();
@@ -17,7 +15,7 @@ fn main() {
 }
 
 #[marine]
-pub  fn ceramic_request(args: Vec<String>) -> MountedBinaryStringResult {  
+pub  fn ceramic_request(args: Vec<String>) -> MountedBinaryResult {  
     unsafe{
         let response = ceramic(args);
         response
@@ -28,7 +26,7 @@ pub  fn ceramic_request(args: Vec<String>) -> MountedBinaryStringResult {
 #[marine]
 #[link(wasm_import_module = "host")]
 extern "C" {
-    pub fn ceramic(cmd: Vec<String>) -> MountedBinaryStringResult;
+    pub fn ceramic(cmd: Vec<String>) -> MountedBinaryResult;
 }
 
 

@@ -1,0 +1,22 @@
+-- import "@fluencelabs/aqua-lib/builtin.aqua"
+import "builtin.aqua"
+
+data Result:
+  ticker: string
+  open: f64
+  high: f64
+  low: f64
+  close: f64
+  error_msg: string 
+  success: bool
+
+service AggregatorService("AggregatorService"):
+  read_last_price(streamId: string)-> Result
+  ping()-> string
+
+func read_last_price(aggregator_service_id: string,streamId :string) -> Result:
+    AggregatorService aggregator_service_id
+    last_price <- AggregatorService.read_last_price(streamId)
+  <- last_price
+
+  

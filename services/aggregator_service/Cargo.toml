@@ -1,13 +1,13 @@
 [package]
-name = "aggregatorservice"
+name = "aggregator_service"
 version = "0.1.0"
 authors = ["juanobligado <juan.obligado@gmail.com>"]
 edition = "2018"
-description = "aggregatorservice, a Marine wasi module"
+description = "aggregator_service, a Marine wasi module"
 license = "Apache-2.0"
 
 [[bin]]
-name = "aggregatorservice"
+name = "aggregator_service"
 path = "src/main.rs"
 
 [dependencies]
