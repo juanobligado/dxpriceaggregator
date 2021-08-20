@@ -1,0 +1,40 @@
+-- import "@fluencelabs/aqua-lib/builtin.aqua"
+import "builtin.aqua"
+
+data Result:
+  ticker: string
+  open: f64
+  high: f64
+  low: f64
+  close: f64
+  last_updated: u64
+  period: u64
+  start_time: u64
+  error_msg: string 
+  success: bool
+
+service AggregatorService("AggregatorService"):
+  read_last_price(streamId: string)-> Result
+  ping()-> string
+  process_data(streamId : string,ticker : string,newPrice:f64,timestamp: u64) -> Result
+
+func read_last_price(node: string,aggregator_service_id: string,streamId :string) -> Result:
+  on node:  
+    AggregatorService aggregator_service_id
+    last_price <- AggregatorService.read_last_price(streamId)
+  <- last_price
+
+func ping(node: string,aggregator_service_id: string) -> string:
+  on node:  
+    AggregatorService aggregator_service_id
+    ping_result <- AggregatorService.ping()
+  <- ping_result
+
+func process_data(node: string, aggregator_service_id : string ,streamId :string , ticker :string ,newPrice: f64 , now : u64) -> Result:
+  on node:
+    AggregatorService aggregator_service_id
+    ping_result <- AggregatorService.process_data(streamId,ticker,newPrice,now)
+  <- ping_result
+
+
+  
