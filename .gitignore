@@ -45,3 +45,5 @@ jspm_packages/
 # artifacts
 services/aggregatorservice/artifacts/
 artifacts/
+ceramic_wrapper/ceramic-linux
+ceramic_wrapper/ceramic-macos

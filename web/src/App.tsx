@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
-//import logo from "./.svg";
 import "./App.scss";
 
 import { createClient, FluenceClient } from "@fluencelabs/fluence";
-import { krasnodar } from "@fluencelabs/fluence-network-environment";
-import { get_last_price } from "./_aqua/run_get_stream_price";
-
-const relayNode = krasnodar[0];
+//import { get_last_price } from "./_aqua/run_get_stream_price";
+import {ping , read_last_price , process_data } from "./_aqua/aggregator_service";
 
 type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
-type Result = Unpromise<ReturnType<typeof get_last_price>>;
+type Result = Unpromise<ReturnType<typeof read_last_price>>;
 
 const TextInput = (props: {
   text: string;
@@ -54,15 +51,16 @@ const NumberInput = (props: {
 function App() {
   const [client, setClient] = useState<FluenceClient | null>(null);
   const [streamId, setStreamId] = useState<string>("kjzl6cwe1jw14b4p64saz1980b0gl3l1c98ag1pslez0shjrhv1mr44257hv9m0");
-  const [node, setNode] = useState<string>("12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e");
-  const [priceServiceId, setPriceServiceId] = useState<string>("61fcbff6-8982-418f-badf-afcd8d9885f7");  
+  const [node, setNode] = useState<string>("12D3KooWCSLKALdhXgQzDBDqBx3WuA8sYRY7rATeo27bXrB1HB83");
+  const [priceServiceId, setPriceServiceId] = useState<string>("97020f48-ff5b-471c-8cf0-c94df082b9a8");  
   const [price, setPrice] = useState<number>(
     0.0
   );
   const [result, setResult] = useState<Result | null>(null);
   let failed = false;
+  let nodeAddr = "/ip4/127.0.0.1/tcp/9999/ws/p2p/12D3KooWCSLKALdhXgQzDBDqBx3WuA8sYRY7rATeo27bXrB1HB83";
   useEffect(() => {
-    createClient(relayNode.multiaddr)
+    createClient(nodeAddr)
       .then(setClient)
       .catch((err) => console.log("Client initialization failed", err));
   }, [client]);
@@ -74,13 +72,14 @@ function App() {
       return;
     }
     try {
-      const res = await get_last_price(
+      const res = await read_last_price(
         client!,
         node,
         priceServiceId,
         streamId        
       );
       console.log("Retrieved result: ", res);
+    
       setResult(res);
       failed = false;
     } catch (err) {
@@ -89,11 +88,30 @@ function App() {
     }
   };
 
+  const doPing = async ()=>{
+    if (client === null) {
+      return;
+    }
+    try {
+      const res = await ping(
+        client!,
+        node,
+        priceServiceId        
+      );
+      var str = "Ping Result: " + res;
+      alert(str);
+      console.log();
+      failed = false;
+    } catch (err) {
+      failed = true;
+      console.log(err);
+    }
+  }
   return (
     <div className="App">
       <header>
-        { <div>Add Logo Here</div>
-        /* <img src={logo} className="logo" alt="logo" /> */}
+         <div>Add Logo Here</div>
+         <img src="./dx_icon.png" className="logo" alt="logo" /> 
       </header>
 
       <div className="content">
@@ -107,7 +125,12 @@ function App() {
           <NumberInput text="price" value={price} setValue={setPrice} />
           <div className="row">
             <button className="btn btn-hello" onClick={() => doGetPrice()}>
-              Push price
+              Read Last price
+            </button>
+          </div>
+          <div className="row">
+            <button className="btn btn-hello" onClick={() => doPing()}>
+              Ping
             </button>
           </div>
         </div>

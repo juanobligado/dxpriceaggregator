@@ -1,0 +1,34 @@
+(xor
+ (seq
+  (seq
+   (seq
+    (seq
+     (seq
+      (seq
+       (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+       (call %init_peer_id% ("getDataSrv" "node") [] node)
+      )
+      (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
+     )
+     (call -relay- ("op" "noop") [])
+    )
+    (xor
+     (seq
+      (call -relay- ("op" "noop") [])
+      (call node (aggregator_service_id "ping") [] ping_result)
+     )
+     (seq
+      (call -relay- ("op" "noop") [])
+      (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+     )
+    )
+   )
+   (call -relay- ("op" "noop") [])
+  )
+  (xor
+   (call %init_peer_id% ("callbackSrv" "response") [ping_result])
+   (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+  )
+ )
+ (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
+)
