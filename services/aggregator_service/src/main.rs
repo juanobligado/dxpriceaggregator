@@ -20,8 +20,9 @@ pub struct BarPrice {
     pub high: f64,
     pub low: f64,
     pub close: f64,
-    pub duration: f64,
-    pub start_time: f64
+    pub duration: i64,
+    pub start_time: i64,
+    pub last_updated: i64
 }
 
 #[marine]
@@ -31,6 +32,10 @@ pub struct Result {
     pub high: f64,
     pub low: f64,
     pub close: f64,
+    pub start_time: i64,
+    pub duration: i64,
+    pub last_updated: i64,
+
     pub success: bool,
     pub error_msg: String,
 }
@@ -60,8 +65,7 @@ pub fn ping() -> String{
 #[marine]
 pub fn read_last_price(streamId: String)-> Result{
     
-    let ceramic_args = vec![String::from("show"), streamId];
-    
+    let ceramic_args = vec![String::from("show"), streamId];    
     let response = unsafe{ ceramic_request(ceramic_args) };
     let result = String::from_utf8(response.stdout);
     match result {
@@ -73,6 +77,9 @@ pub fn read_last_price(streamId: String)-> Result{
                 high: bar.high,
                 low: bar.low,
                 close: bar.close,
+                last_updated: bar.last_updated,
+                duration : bar.duration,
+                start_time : bar.start_time,
                 success: true,
                 error_msg: "".to_string(),
             }
@@ -82,6 +89,9 @@ pub fn read_last_price(streamId: String)-> Result{
                 open: -1.0,
                 high: -1.0,
                 low: -1.0,
+                last_updated : 0,
+                duration : 0,
+                start_time : 0,
                 close: -1.0,
                 success: false,
                 error_msg: String::from_utf8(response.stderr).unwrap(),            
@@ -103,6 +113,9 @@ pub fn update_price(streamId:String,barPrice: BarPrice)-> Result{
                 high: bar.high,
                 low: bar.low,
                 close: bar.close,
+                duration : bar.duration,
+                last_updated : bar.last_updated,
+                start_time : bar.start_time,
                 success: true,
                 error_msg: "".to_string(),
             }
@@ -113,6 +126,9 @@ pub fn update_price(streamId:String,barPrice: BarPrice)-> Result{
                 high: -1.0,
                 low: -1.0,
                 close: -1.0,
+                start_time : 0,
+                last_updated : 0,
+                duration : 0,
                 success: false,
                 error_msg: String::from_utf8(response.stderr).unwrap(),            
         }
@@ -126,24 +142,29 @@ pub fn fake_read_last() -> Result{
         high : 11.3,
         low :9.2,
         close :12.3,
+        duration : 0,
+        start_time : 0,
+        last_updated: 0,
         error_msg : "".to_string(),
         success : true
     }
 }
 
 #[marine]
-pub fn process_data(  streamId : String,newPrice:f64  ) -> Result  {    
+pub fn process_data(  streamId : String,newPrice:f64 , time: i64  ) -> Result  {    
     let existingPrice = read_last_price(streamId.clone());  
     if(existingPrice.success){
 
+        
         let mut newBar  =  BarPrice{
             ticker : existingPrice.ticker,
             open : existingPrice.open,
             high : existingPrice.high,
             low : existingPrice.low,
             close : newPrice,
-           duration : 1000.0,
-           start_time : 1000.0
+            duration : existingPrice.duration,
+            start_time : existingPrice.start_time,
+            last_updated: time
         };
         if(newPrice > existingPrice.high){
             newBar.high = newPrice;
@@ -151,6 +172,9 @@ pub fn process_data(  streamId : String,newPrice:f64  ) -> Result  {
         if(newPrice < existingPrice.high){
             newBar.low = newPrice;
         };
+        if(time > existingPrice.duration + existingPrice.start_time){
+            newBar.start_time =existingPrice.duration + existingPrice.start_time;            
+        }
         let updated_price_result = update_price(streamId.clone(),newBar);
         updated_price_result
     }
@@ -161,6 +185,9 @@ pub fn process_data(  streamId : String,newPrice:f64  ) -> Result  {
             open : 0.0,
             high : 0.0,
             low : 0.0,
+            start_time : 0,
+            duration : 0,
+            last_updated : 0,
             ticker : "".to_string(),
             success: false,
             error_msg : String::from("cannot find last price")
@@ -173,12 +200,20 @@ pub fn process_data(  streamId : String,newPrice:f64  ) -> Result  {
 #[cfg(test)]
 mod tests {
     use marine_rs_sdk_test::marine_test;
+    use chrono::prelude::*;
+
+    pub fn get_unix_timestamp_ms() -> i64 {
+        let now = Utc::now();
+        now.timestamp_millis()
+    }
 
     #[marine_test(config_path = "../../Config.toml", modules_dir = "../../artifacts")]
     fn test_get_price() {
-        let streamId:String = String::from("kjzl6cwe1jw14b4p64saz1980b0gl3l1c98ag1pslez0shjrhv1mr44257hv9m0");
+        let start = get_unix_timestamp_ms();
+        println!("{}",start);
+        let streamId:String = String::from("kjzl6cwe1jw147d3hz5mmf6997l8hjo6cbvwjn1t7210hjot8i371s9lzggidlz");
         let newPrice : f64= 4323.32;
-        let result = aggregator_service.process_data(streamId,newPrice);
+        let result = aggregator_service.process_data(streamId,newPrice,start);
         println!("Open {:?} High {:?} Low {:?} Close {:?} ",result.open,result.high,result.low,result.close);
 
     }
