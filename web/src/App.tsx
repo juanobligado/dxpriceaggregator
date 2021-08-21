@@ -50,12 +50,11 @@ const NumberInput = (props: {
 
 function App() {
   const [client, setClient] = useState<FluenceClient | null>(null);
-  const [streamId, setStreamId] = useState<string>("kjzl6cwe1jw14b4p64saz1980b0gl3l1c98ag1pslez0shjrhv1mr44257hv9m0");
+  const [streamId, setStreamId] = useState<string>("kjzl6cwe1jw147d3hz5mmf6997l8hjo6cbvwjn1t7210hjot8i371s9lzggidlz");
   const [node, setNode] = useState<string>("12D3KooWCSLKALdhXgQzDBDqBx3WuA8sYRY7rATeo27bXrB1HB83");
-  const [priceServiceId, setPriceServiceId] = useState<string>("97020f48-ff5b-471c-8cf0-c94df082b9a8");  
-  const [price, setPrice] = useState<number>(
-    0.0
-  );
+  const [priceServiceId, setPriceServiceId] = useState<string>("d4635b5a-6329-4e31-a0ee-b106441a358a"); 
+  const [ticker, setTicker] = useState<string>("ETH"); 
+  const [price, setPrice] = useState<number>(0.0);
   const [result, setResult] = useState<Result | null>(null);
   let failed = false;
   let nodeAddr = "/ip4/127.0.0.1/tcp/9999/ws/p2p/12D3KooWCSLKALdhXgQzDBDqBx3WuA8sYRY7rATeo27bXrB1HB83";
@@ -77,6 +76,33 @@ function App() {
         node,
         priceServiceId,
         streamId        
+      );
+      console.log("Retrieved result: ", res);
+    
+      setResult(res);
+      failed = false;
+    } catch (err) {
+      failed = true;
+      console.log(err);
+    }
+  };
+
+
+  const doSendPrice = async () => {
+    if (client === null) {
+      return;
+    }
+    try {
+      let now = Date.prototype.getTime();
+      console.log('Calling Process Data : ',node,priceServiceId,streamId,ticker,price ,Date.prototype.getTime());
+      const res = await process_data(
+        client!,
+        node,
+        priceServiceId,
+        streamId,
+        ticker,
+        price ,
+        now       
       );
       console.log("Retrieved result: ", res);
     
@@ -122,17 +148,23 @@ function App() {
           <TextInput text={"node"} value={node} setValue={setNode} />
           <TextInput text={"priceServiceId"} value={priceServiceId} setValue={setPriceServiceId} />
           <TextInput text={"Ceramic Stream Id"} value={streamId} setValue={setStreamId} />
+          <TextInput text={"Ticker"} value={ticker} setValue={setTicker} />
           <NumberInput text="price" value={price} setValue={setPrice} />
+
           <div className="row">
+          <button className="btn btn-hello" onClick={() => doSendPrice()}>
+              Update  price
+            </button>
             <button className="btn btn-hello" onClick={() => doGetPrice()}>
               Read Last price
             </button>
-          </div>
-          <div className="row">
+
             <button className="btn btn-hello" onClick={() => doPing()}>
               Ping
             </button>
-          </div>
+
+          </div>          
+
         </div>
         <h2>Bar price</h2>
         { result?.ticker !== "" &&    (
