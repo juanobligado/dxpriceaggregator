@@ -1,0 +1,6 @@
+{
+    "name": "ceramic_adapter",
+    "mountedBinaries": {
+        "ceramic": "/usr/bin/ceramic"
+    }
+}

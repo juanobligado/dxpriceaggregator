@@ -1,0 +1,19 @@
+{
+  "name": "ceramic",
+  "version": "1.0.0",
+  "description": "Ceramic CLI Wrapper",
+  "pkg": {
+    "scripts": "build/**/*.js",
+    "assets": "views/**/*",
+    "targets": [
+      "node14-linux-arm64",
+      "node10-win-x64"
+    ],
+    "outputPath": "dist"
+  },
+  "author": "Juan Obligado",
+  "license": "ISC",
+  "dependencies": {
+    "@ceramicnetwork/cli": "^1.2.1"
+  }
+}
