@@ -3,27 +3,26 @@ Decentralized Price Aggregation Service
 
 #Tree Structure
 
-.
-├── schema                  # Ceramic schema definition
-├── services                # Fluence Services
-│   ├── ceramic_adapter     # ceramic adapter service
-│   ├── aggregator_service  # price aggregator service
-│   ├── artifacts           # Web Assembly outputs
-│   ├── configs             # Configuration files to deploy services
-│   ├── build.sh            # Build script to create artifacts
-│   ├── ...
-│   └── deploy_service.sh   # Script to deploy artifacts into a node using fldist
-│
-├── service_interface       # scripts to create service interface (Air and typescripts)
-│   ├── aqua_scripts        # Orchestrating scripts to de
-│   ├── air-scripts         # generated air and typescript 
-│   └── build.interface.sh
-├── ...
-├── web
-│   └── src
-│       └── _aqua           # Here we copy aqua generated  typescript file so we can 
-|                           #  invoke fluence code from Web project
-└── ...
+├── schema                  # Ceramic schema definition \
+├── services                # Fluence Services \
+│     ├── ceramic_adapter     # ceramic adapter service \
+│     ├── aggregator_service  # price aggregator service \
+│     ├── artifacts           # Web Assembly outputs \
+│     ├── configs             # Configuration files to deploy services \
+│     ├── build.sh            # Build script to create artifacts \
+│     ├── ... \
+│     └── deploy_service.sh   # Script to deploy artifacts into a node using fldist \
+│ \
+├── service_interface       # scripts to create service interface (Air and typescripts)\
+│     ├── aqua_scripts        # Orchestrating scripts to de\
+│     ├── air-scripts         # generated air and typescript\ 
+│     └── build.interface.sh\
+├── ...\
+├── web\
+│     └── src\
+│         └── _aqua           # Here we copy aqua generated  typescript file so we can \
+│                           #  invoke fluence code from Web project\
+└── ...\
 #Introduction
 
 The idea is to create a Composable price aggregation service which will allow devs to easily access / create and store historical data sets in a descentralized manner 
