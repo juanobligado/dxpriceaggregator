@@ -12,15 +12,9 @@ import { RequestFlow } from '@fluencelabs/fluence/dist/internal/RequestFlow';
 
 
 
-<<<<<<< HEAD
-export async function read_last_price(client: FluenceClient, node: string, aggregator_service_id: string, streamId: string, config?: {ttl?: number}): Promise<{close:number;error_msg:string;high:number;low:number;open:number;success:boolean;ticker:string}> {
-    let request: RequestFlow;
-    const promise = new Promise<{close:number;error_msg:string;high:number;low:number;open:number;success:boolean;ticker:string}>((resolve, reject) => {
-=======
 export async function read_last_price(client: FluenceClient, node: string, aggregator_service_id: string, streamId: string, config?: {ttl?: number}): Promise<{close:number;error_msg:string;high:number;last_updated:number;low:number;open:number;period:number;start_time:number;success:boolean;ticker:string}> {
     let request: RequestFlow;
     const promise = new Promise<{close:number;error_msg:string;high:number;last_updated:number;low:number;open:number;period:number;start_time:number;success:boolean;ticker:string}>((resolve, reject) => {
->>>>>>> 97cbeefef2ce1089523760caa8965f8a77cf44ad
         const r = new RequestFlowBuilder()
             .disableInjections()
             .withRawScript(
@@ -171,8 +165,6 @@ h.on('getDataSrv', 'aggregator_service_id', () => {return aggregator_service_id;
     await client.initiateFlow(request!);
     return promise;
 }
-<<<<<<< HEAD
-=======
       
 
 
@@ -265,5 +257,4 @@ h.on('getDataSrv', 'now', () => {return now;});
     await client.initiateFlow(request!);
     return promise;
 }
->>>>>>> 97cbeefef2ce1089523760caa8965f8a77cf44ad
       
