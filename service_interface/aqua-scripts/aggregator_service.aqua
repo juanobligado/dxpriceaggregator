@@ -16,7 +16,7 @@ data Result:
 service AggregatorService("AggregatorService"):
   read_last_price(streamId: string)-> Result
   ping()-> string
-  process_data(streamId : string,ticker : string,newPrice:f64,timestamp: u64) -> Result
+  process_data(streamId : string,newPrice:f64,timestamp: u64) -> Result
 
 func read_last_price(node: string,aggregator_service_id: string,streamId :string) -> Result:
   on node:  
@@ -30,11 +30,11 @@ func ping(node: string,aggregator_service_id: string) -> string:
     ping_result <- AggregatorService.ping()
   <- ping_result
 
-func process_data(node: string, aggregator_service_id : string ,streamId :string , ticker :string ,newPrice: f64 , now : u64) -> Result:
+func process_data(node: string, aggregator_service_id : string ,streamId :string ,newPrice: f64 , now : u64) -> Result:
   on node:
     AggregatorService aggregator_service_id
-    ping_result <- AggregatorService.process_data(streamId,ticker,newPrice,now)
-  <- ping_result
+    process_data <- AggregatorService.process_data(streamId,newPrice,now)
+  <- process_data
 
 
   

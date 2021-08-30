@@ -8,15 +8,12 @@
        (seq
         (seq
          (seq
-          (seq
-           (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-           (call %init_peer_id% ("getDataSrv" "node") [] node)
-          )
-          (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
+          (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+          (call %init_peer_id% ("getDataSrv" "node") [] node)
          )
-         (call %init_peer_id% ("getDataSrv" "streamId") [] streamId)
+         (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
         )
-        (call %init_peer_id% ("getDataSrv" "ticker") [] ticker)
+        (call %init_peer_id% ("getDataSrv" "streamId") [] streamId)
        )
        (call %init_peer_id% ("getDataSrv" "newPrice") [] newPrice)
       )
@@ -27,7 +24,7 @@
     (xor
      (seq
       (call -relay- ("op" "noop") [])
-      (call node (aggregator_service_id "process_data") [streamId ticker newPrice now] ping_result)
+      (call node (aggregator_service_id "process_data") [streamId newPrice now] process_data)
      )
      (seq
       (call -relay- ("op" "noop") [])
@@ -38,7 +35,7 @@
    (call -relay- ("op" "noop") [])
   )
   (xor
-   (call %init_peer_id% ("callbackSrv" "response") [ping_result])
+   (call %init_peer_id% ("callbackSrv" "response") [process_data])
    (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
   )
  )

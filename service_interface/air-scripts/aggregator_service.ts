@@ -168,7 +168,7 @@ h.on('getDataSrv', 'aggregator_service_id', () => {return aggregator_service_id;
       
 
 
-export async function process_data(client: FluenceClient, node: string, aggregator_service_id: string, streamId: string, ticker: string, newPrice: number, now: number, config?: {ttl?: number}): Promise<{close:number;error_msg:string;high:number;last_updated:number;low:number;open:number;period:number;start_time:number;success:boolean;ticker:string}> {
+export async function process_data(client: FluenceClient, node: string, aggregator_service_id: string, streamId: string, newPrice: number, now: number, config?: {ttl?: number}): Promise<{close:number;error_msg:string;high:number;last_updated:number;low:number;open:number;period:number;start_time:number;success:boolean;ticker:string}> {
     let request: RequestFlow;
     const promise = new Promise<{close:number;error_msg:string;high:number;last_updated:number;low:number;open:number;period:number;start_time:number;success:boolean;ticker:string}>((resolve, reject) => {
         const r = new RequestFlowBuilder()
@@ -185,15 +185,12 @@ export async function process_data(client: FluenceClient, node: string, aggregat
        (seq
         (seq
          (seq
-          (seq
-           (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-           (call %init_peer_id% ("getDataSrv" "node") [] node)
-          )
-          (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
+          (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+          (call %init_peer_id% ("getDataSrv" "node") [] node)
          )
-         (call %init_peer_id% ("getDataSrv" "streamId") [] streamId)
+         (call %init_peer_id% ("getDataSrv" "aggregator_service_id") [] aggregator_service_id)
         )
-        (call %init_peer_id% ("getDataSrv" "ticker") [] ticker)
+        (call %init_peer_id% ("getDataSrv" "streamId") [] streamId)
        )
        (call %init_peer_id% ("getDataSrv" "newPrice") [] newPrice)
       )
@@ -204,7 +201,7 @@ export async function process_data(client: FluenceClient, node: string, aggregat
     (xor
      (seq
       (call -relay- ("op" "noop") [])
-      (call node (aggregator_service_id "process_data") [streamId ticker newPrice now] ping_result)
+      (call node (aggregator_service_id "process_data") [streamId newPrice now] process_data)
      )
      (seq
       (call -relay- ("op" "noop") [])
@@ -215,7 +212,7 @@ export async function process_data(client: FluenceClient, node: string, aggregat
    (call -relay- ("op" "noop") [])
   )
   (xor
-   (call %init_peer_id% ("callbackSrv" "response") [ping_result])
+   (call %init_peer_id% ("callbackSrv" "response") [process_data])
    (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
   )
  )
@@ -231,7 +228,6 @@ export async function process_data(client: FluenceClient, node: string, aggregat
                 h.on('getDataSrv', 'node', () => {return node;});
 h.on('getDataSrv', 'aggregator_service_id', () => {return aggregator_service_id;});
 h.on('getDataSrv', 'streamId', () => {return streamId;});
-h.on('getDataSrv', 'ticker', () => {return ticker;});
 h.on('getDataSrv', 'newPrice', () => {return newPrice;});
 h.on('getDataSrv', 'now', () => {return now;});
                 h.onEvent('callbackSrv', 'response', (args) => {

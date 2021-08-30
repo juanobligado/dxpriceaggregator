@@ -169,7 +169,7 @@ pub fn process_data(  streamId : String,newPrice:f64 , time: i64  ) -> Result  {
         if(newPrice > existingPrice.high){
             newBar.high = newPrice;
         };
-        if(newPrice < existingPrice.high){
+        if(newPrice < existingPrice.low){
             newBar.low = newPrice;
         };
         if(time > existingPrice.duration + existingPrice.start_time){

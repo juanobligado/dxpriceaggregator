@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
 import "./App.scss";
-
 import { createClient, FluenceClient } from "@fluencelabs/fluence";
-//import { get_last_price } from "./_aqua/run_get_stream_price";
-import {ping , read_last_price , process_data } from "./_aqua/aggregator_service";
+import { ping , read_last_price , process_data } from "./_aqua/aggregator_service";
 
 type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
-
 type Result = Unpromise<ReturnType<typeof read_last_price>>;
 
 const TextInput = (props: {
@@ -50,21 +47,28 @@ const NumberInput = (props: {
 
 function App() {
   const [client, setClient] = useState<FluenceClient | null>(null);
-  const [streamId, setStreamId] = useState<string>("kjzl6cwe1jw147d3hz5mmf6997l8hjo6cbvwjn1t7210hjot8i371s9lzggidlz");
+  const [streamId, setStreamId] = useState<string>("kjzl6cwe1jw149pkg27j3xszjkxksp6jjwpqr7k84jlinxk4k7gyefnjaikezme");
   const [node, setNode] = useState<string>("12D3KooWCSLKALdhXgQzDBDqBx3WuA8sYRY7rATeo27bXrB1HB83");
-  const [priceServiceId, setPriceServiceId] = useState<string>("d4635b5a-6329-4e31-a0ee-b106441a358a"); 
-  const [ticker, setTicker] = useState<string>("ETH"); 
+  const [priceServiceId, setPriceServiceId] = useState<string>("4af1cb27-9d24-4741-9104-000f898e3188"); 
   const [price, setPrice] = useState<number>(0.0);
   const [result, setResult] = useState<Result | null>(null);
   let failed = false;
-  let nodeAddr = "/ip4/127.0.0.1/tcp/9999/ws/p2p/12D3KooWCSLKALdhXgQzDBDqBx3WuA8sYRY7rATeo27bXrB1HB83";
-  useEffect(() => {
-    createClient(nodeAddr)
-      .then(setClient)
-      .catch((err) => console.log("Client initialization failed", err));
-  }, [client]);
+  let nodeAddr = "/ip4/127.0.0.1/tcp/9999/ws/p2p/" + node;
+  let havePrice = false;
 
   const isConnected = client !== null;
+
+  const doConnect = () =>{
+    nodeAddr = "/ip4/127.0.0.1/tcp/9999/ws/p2p/" + node;
+    console.log('Connecting to Fluence...',nodeAddr);
+    if(isConnected){
+      setClient(null);
+    }
+    
+    createClient(nodeAddr)
+        .then(setClient)
+        .catch((err) => console.log("Client initialization failed", err));
+  }
 
   const doGetPrice = async () => {
     if (client === null) {
@@ -78,10 +82,11 @@ function App() {
         streamId        
       );
       console.log("Retrieved result: ", res);
-    
+      havePrice = true;
       setResult(res);
       failed = false;
     } catch (err) {
+      havePrice = false;
       failed = true;
       console.log(err);
     }
@@ -93,22 +98,22 @@ function App() {
       return;
     }
     try {
-      let now = Date.prototype.getTime();
-      console.log('Calling Process Data : ',node,priceServiceId,streamId,ticker,price ,Date.prototype.getTime());
+      let now = new Date().getTime();
       const res = await process_data(
         client!,
         node,
         priceServiceId,
         streamId,
-        ticker,
         price ,
         now       
       );
       console.log("Retrieved result: ", res);
     
       setResult(res);
+      havePrice = true;
       failed = false;
     } catch (err) {
+      havePrice = false;
       failed = true;
       console.log(err);
     }
@@ -136,40 +141,56 @@ function App() {
   return (
     <div className="App">
       <header>
-         <div>Add Logo Here</div>
+         <h1>DX Aggregator DEMO</h1>
          <img src="./dx_icon.png" className="logo" alt="logo" /> 
       </header>
 
       <div className="content">
-        <h1>Status: {isConnected ? "Connected" : "Disconnected"}</h1>
-        <p>Simple app to test Aggregator price</p>
+
+        <TextInput text={"Fluence Network Node"} value={node} setValue={setNode} />
+
+        <TextInput text={"Service Id:"} value={priceServiceId} setValue={setPriceServiceId} />
+         
+        <h1 className={isConnected ? "success"  : "error"} >Status: {isConnected ? "Connected" : "Disconnected"}</h1>
+
+        <div>
+        <div className="row">
+            <button className="btn btn-wide " onClick={() => doPing()}>
+              Check 
+            </button>
+            <button className="btn btn-wide btn-connect" onClick={()=>doConnect()}>Connect</button>
+
+
+          </div>          
+
+        </div>
+
         <div>
           <h2>Update Last Price to Ceramic</h2>
-          <TextInput text={"node"} value={node} setValue={setNode} />
-          <TextInput text={"priceServiceId"} value={priceServiceId} setValue={setPriceServiceId} />
-          <TextInput text={"Ceramic Stream Id"} value={streamId} setValue={setStreamId} />
-          <TextInput text={"Ticker"} value={ticker} setValue={setTicker} />
+
+          <TextInput text={"Ceramic Stream Id:"} value={streamId} setValue={setStreamId} />
+
           <NumberInput text="price" value={price} setValue={setPrice} />
 
           <div className="row">
-          <button className="btn btn-hello" onClick={() => doSendPrice()}>
+          <button className="btn btn-wide" onClick={() => doSendPrice()}>
               Update  price
             </button>
-            <button className="btn btn-hello" onClick={() => doGetPrice()}>
+            <button className="btn btn-wide" onClick={() => doGetPrice()}>
               Read Last price
-            </button>
-
-            <button className="btn btn-hello" onClick={() => doPing()}>
-              Ping
             </button>
 
           </div>          
 
         </div>
-        <h2>Bar price</h2>
-        { result?.ticker !== "" &&    (
-          <p className="success">The price is: {result?.ticker} | O: {result?.open} | H: {result?.high} | L: {result?.low} | C: {result?.close} </p>
-        )}
+        
+        { havePrice  ?
+          
+          <h2>Bar price</h2> : ''
+        }
+        {
+          <p className="success">The price is: {result?.ticker} | O: {result?.open} | H: {result?.high} | L: {result?.low} | C: {result?.close} </p> 
+        }
       </div>
     </div>
   );
